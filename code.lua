@@ -84,7 +84,7 @@ O.Config = {
     ESPBosses = true,
     ESPSeaEvents = true,
     DebugMode = false,
-    PriorityFruits = {"Dough","Venom","Dragon","Leopard","Kitsune","Yeti","gaz","Spirit","Soul","Buddha, Phoenix","Rumble","Light","Dark,","Control","Quake","Love","creation","Diamond"},
+    PriorityFruits = {"Dough","Venom","Dragon","Leopard","Kitsune","Yeti","Dark","Spirit","Soul","Buddha"},
     SeaEventPriority = "Leviathan",
 }
 
@@ -106,8 +106,7 @@ O.CommF = CommF
 O.State = {IsLoaded = false, CurrentLevel = 0, CurrentSea = "Unknown", CurrentIsland = "Unknown", CurrentRace = "Human", CurrentFruit = "None", IsDead = false, IsFullMoon = false, IsMirageActive = false, TotalKills = 0, TotalChestsOpened = 0, TotalFruitsCollected = 0, TotalSeaEventsKilled = 0, TotalBossesKilled = 0, TotalRaidsCompleted = 0, StartTime = tick()}
 
 -- SECTION 3: ATTENTE CHARGEMENT
-repeat task.wait() until game:IsLoaded() and Players.LocalPlayer and Players.LocalPlayer.Character
-LP = Players.LocalPlayer
+repeat task.wait() until game:IsLoaded() and LP and LP.Character
 local Char = LP.Character
 local HRP = Char:WaitForChild("HumanoidRootPart")
 local Hum = Char:WaitForChildOfClass("Humanoid")
@@ -124,9 +123,8 @@ end)
 
 -- SECTION 4: FONCTIONS UTILES
 function O:Remote(...)
-    local comm = self.CommF or CommF
-    if comm then
-        local s, e = pcall(function() return comm:InvokeServer(...) end)
+    if CommF then
+        local s, e = pcall(function() return CommF:InvokeServer(...) end)
         return s and e
     end
 end
@@ -245,16 +243,12 @@ function O:Attack()
 end
 
 function O:UseSkill(key)
-    local vim = self.Services and self.Services.VirtualInputManager
-    if not vim then return end
     local map = {Z = Enum.KeyCode.Z, X = Enum.KeyCode.X, C = Enum.KeyCode.C, V = Enum.KeyCode.V, F = Enum.KeyCode.F}
     local code = map[key:upper()]
     if code then
-        pcall(function()
-            vim:SendKeyEvent(true, code, false, nil)
-            task.wait(0.05)
-            vim:SendKeyEvent(false, code, false, nil)
-        end)
+        VirtualInputManager:SendKeyEvent(true, code, false, nil)
+        task.wait(0.05)
+        VirtualInputManager:SendKeyEvent(false, code, false, nil)
     end
 end
 
@@ -338,7 +332,6 @@ function O:GetCurrentIsland()
     end
     return nearDist < 2000 and near or "Sea"
 end
-
 -- SECTION 6: AUTO FARM PRINCIPAL
 function O:StartAutoFarm()
     spawn(function()
@@ -667,7 +660,6 @@ function O:IsMirageActive()
     end
     return false
 end
-
 -- SECTION 18: ESP COMPLET
 function O:StartESP()
     if not self.Config.ESP then return end
@@ -1060,32 +1052,3 @@ function O:CreateGUI()
         scroll.CanvasSize = UDim2.new(0, 0, 0, y + 10)
     end)
 end
-
--- SECTION 99: BOOTSTRAP - démarre les services configurés
-pcall(function()
-    -- GUI
-    pcall(function() O:CreateGUI() end)
-
-    -- Core automatisations
-    pcall(function() if O.Config.AutoFarm then O:StartAutoFarm() end end)
-    pcall(function() if O.Config.AutoBoss then O:StartAutoBoss() end end)
-    pcall(function() if O.Config.AutoSeaEvent then O:StartAutoSeaEvents() end end)
-    pcall(function() if O.Config.AutoFruitSniper then O:StartAutoFruitSniper() end end)
-    pcall(function() if O.Config.AutoRaid then O:StartAutoRaid() end end)
-    pcall(function() if O.Config.AutoRaceV4 then O:StartAutoRaceV4() end end)
-    pcall(function() if O.Config.AutoYama or O.Config.AutoTushita or O.Config.AutoTTK or O.Config.AutoCDK or O.Config.AutoSoulGuitar then O:StartAutoWeapons() end end)
-    pcall(function() if O.Config.AutoHaki then O:StartAutoHaki() end end)
-    pcall(function() if O.Config.AutoStats then O:StartAutoStats() end end)
-    pcall(function() if O.Config.AutoChest then O:StartAutoChest() end end)
-    pcall(function() if O.Config.AutoBones or O.Config.AutoEctoplasm then O:StartAutoBones() end end)
-    pcall(function() if O.Config.AutoServerHop then O:StartServerHop() end end)
-    pcall(function() if O.Config.ESP then O:StartESP() end end)
-    pcall(function() if O.Config.AntiBan then O:StartAntiBan() end end)
-    pcall(function() if O.Config.AutoFactory then O:StartAutoFactory() end end)
-    pcall(function() if O.Config.AutoDungeon then O:StartAutoDungeon() end end)
-    pcall(function() if O.Config.AutoFruitPurchase then O:StartAutoFruitPurchase() end end)
-    pcall(function() if O.Config.AutoFragment then O:StartAutoFragment() end end)
-    pcall(function() if O.Config.AutoFruitCollect or O.Config.AutoFruitStorage then O:StartAutoFruitSniper() end end)
-
-    print("[Omega] Bootstrap initialisé")
-end)
