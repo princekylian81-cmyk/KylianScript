@@ -367,35 +367,6 @@ function O:StartAutoFarm()
     end)
 end
 
--- SECTION 99: BOOTSTRAP - démarre les services configurés
-pcall(function()
-    -- GUI
-    pcall(function() O:CreateGUI() end)
-
-    -- Core automatisations
-    pcall(function() if O.Config.AutoFarm then O:StartAutoFarm() end end)
-    pcall(function() if O.Config.AutoBoss then O:StartAutoBoss() end end)
-    pcall(function() if O.Config.AutoSeaEvent then O:StartAutoSeaEvents() end end)
-    pcall(function() if O.Config.AutoFruitSniper then O:StartAutoFruitSniper() end end)
-    pcall(function() if O.Config.AutoRaid then O:StartAutoRaid() end end)
-    pcall(function() if O.Config.AutoRaceV4 then O:StartAutoRaceV4() end end)
-    pcall(function() if O.Config.AutoYama or O.Config.AutoTushita or O.Config.AutoTTK or O.Config.AutoCDK or O.Config.AutoSoulGuitar then O:StartAutoWeapons() end end)
-    pcall(function() if O.Config.AutoHaki then O:StartAutoHaki() end end)
-    pcall(function() if O.Config.AutoStats then O:StartAutoStats() end end)
-    pcall(function() if O.Config.AutoChest then O:StartAutoChest() end end)
-    pcall(function() if O.Config.AutoBones or O.Config.AutoEctoplasm then O:StartAutoBones() end end)
-    pcall(function() if O.Config.AutoServerHop then O:StartServerHop() end end)
-    pcall(function() if O.Config.ESP then O:StartESP() end end)
-    pcall(function() if O.Config.AntiBan then O:StartAntiBan() end end)
-    pcall(function() if O.Config.AutoFactory then O:StartAutoFactory() end end)
-    pcall(function() if O.Config.AutoDungeon then O:StartAutoDungeon() end end)
-    pcall(function() if O.Config.AutoFruitPurchase then O:StartAutoFruitPurchase() end end)
-    pcall(function() if O.Config.AutoFragment then O:StartAutoFragment() end end)
-    pcall(function() if O.Config.AutoFruitCollect or O.Config.AutoFruitStorage then O:StartAutoFruitSniper() end end)
-
-    print("[Omega] Bootstrap initialisé")
-end)
-
 -- SECTION 7: AUTO BOSS
 function O:StartAutoBoss()
     spawn(function()
@@ -1089,3 +1060,32 @@ function O:CreateGUI()
         scroll.CanvasSize = UDim2.new(0, 0, 0, y + 10)
     end)
 end
+
+-- SECTION 99: BOOTSTRAP - démarre les services configurés
+pcall(function()
+    -- GUI
+    pcall(function() O:CreateGUI() end)
+
+    -- Core automatisations
+    pcall(function() if O.Config.AutoFarm then O:StartAutoFarm() end end)
+    pcall(function() if O.Config.AutoBoss then O:StartAutoBoss() end end)
+    pcall(function() if O.Config.AutoSeaEvent then O:StartAutoSeaEvents() end end)
+    pcall(function() if O.Config.AutoFruitSniper then O:StartAutoFruitSniper() end end)
+    pcall(function() if O.Config.AutoRaid then O:StartAutoRaid() end end)
+    pcall(function() if O.Config.AutoRaceV4 then O:StartAutoRaceV4() end end)
+    pcall(function() if O.Config.AutoYama or O.Config.AutoTushita or O.Config.AutoTTK or O.Config.AutoCDK or O.Config.AutoSoulGuitar then O:StartAutoWeapons() end end)
+    pcall(function() if O.Config.AutoHaki then O:StartAutoHaki() end end)
+    pcall(function() if O.Config.AutoStats then O:StartAutoStats() end end)
+    pcall(function() if O.Config.AutoChest then O:StartAutoChest() end end)
+    pcall(function() if O.Config.AutoBones or O.Config.AutoEctoplasm then O:StartAutoBones() end end)
+    pcall(function() if O.Config.AutoServerHop then O:StartServerHop() end end)
+    pcall(function() if O.Config.ESP then O:StartESP() end end)
+    pcall(function() if O.Config.AntiBan then O:StartAntiBan() end end)
+    pcall(function() if O.Config.AutoFactory then O:StartAutoFactory() end end)
+    pcall(function() if O.Config.AutoDungeon then O:StartAutoDungeon() end end)
+    pcall(function() if O.Config.AutoFruitPurchase then O:StartAutoFruitPurchase() end end)
+    pcall(function() if O.Config.AutoFragment then O:StartAutoFragment() end end)
+    pcall(function() if O.Config.AutoFruitCollect or O.Config.AutoFruitStorage then O:StartAutoFruitSniper() end end)
+
+    print("[Omega] Bootstrap initialisé")
+end)
