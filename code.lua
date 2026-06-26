@@ -331,7 +331,8 @@ function O:GetCurrentIsland()
         if d < nearDist then near, nearDist = n, d end
     end
     return nearDist < 2000 and near or "Sea"
-end
+end 
+
 -- SECTION 6: AUTO FARM PRINCIPAL
 function O:StartAutoFarm()
     spawn(function()
@@ -660,6 +661,7 @@ function O:IsMirageActive()
     end
     return false
 end
+
 -- SECTION 18: ESP COMPLET
 function O:StartESP()
     if not self.Config.ESP then return end
@@ -1052,3 +1054,753 @@ function O:CreateGUI()
         scroll.CanvasSize = UDim2.new(0, 0, 0, y + 10)
     end)
 end
+
+-- SECTION 26: OVERLAY STATS EN JEU
+function O:CreateStatsOverlay()
+    if not self.Config.ShowStatsOverlay then return end
+    pcall(function()
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "OmegaStatsOverlay"
+        screenGui.ResetOnSpawn = false
+        screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        local plrGui = LP:FindFirstChild("PlayerGui")
+        if plrGui then screenGui.Parent = plrGui end
+        
+        local frame = Instance.new("Frame")
+        frame.Parent = screenGui
+        frame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
+        frame.BorderColor3 = Color3.fromRGB(30, 30, 100)
+        frame.BorderSizePixel = 1
+        frame.Size = UDim2.new(0, 200, 0, 160)
+        frame.Position = UDim2.new(1, -210, 0, 10)
+        frame.BackgroundTransparency = 0.2
+        frame.Active = true
+        frame.Draggable = true
+        
+        local title = Instance.new("TextLabel")
+        title.Parent = frame
+        title.BackgroundTransparency = 1
+        title.Size = UDim2.new(0, 200, 0, 20)
+        title.Position = UDim2.new(0, 0, 0, 2)
+        title.Text = "⬡ OMEGA v" .. self.Version
+        title.TextColor3 = Color3.fromRGB(60, 120, 255)
+        title.TextSize = 12
+        title.Font = Enum.Font.GothamBold
+        
+        local updateOverlay
+        updateOverlay = function()
+            pcall(function()
+                local lv = self:GetLevel()
+                local sea = self:GetSea()
+                local beli = LP:FindFirstChild("Data") and LP.Data:FindFirstChild("Beli") and LP.Data.Beli.Value or 0
+                local bounty = LP:FindFirstChild("Data") and LP.Data:FindFirstChild("Bounty") and LP.Data.Bounty.Value or 0
+                local frags = LP:FindFirstChild("Data") and LP.Data:FindFirstChild("Fragments") and LP.Data.Fragments.Value or 0
+                local race = self:GetRace()
+                local fruit = self:GetFruit()
+                local island = self:GetCurrentIsland()
+                local hp = Hum and math.floor(Hum.Health) or 0
+                local maxHp = Hum and math.floor(Hum.MaxHealth) or 1
+                
+                local text = ""
+                text = text .. "🎯 Niveau: " .. lv .. "\n"
+                text = text .. "🌊 Mer: " .. sea .. "\n"
+                text = text .. "🏝️ " .. island .. "\n"
+                text = text .. "❤️ HP: " .. hp .. "/" .. maxHp .. "\n"
+                text = text .. "💰 Beli: " .. self:FormatNumber(beli) .. "\n"
+                text = text .. "🏆 Bounty: " .. self:FormatNumber(bounty) .. "\n"
+                text = text .. "💎 Frags: " .. self:FormatNumber(frags) .. "\n"
+                text = text .. "🧬 Race: " .. race .. "\n"
+                text = text .. "🍎 Fruit: " .. fruit .. "\n"
+                text = text .. "⚔️ Kills: " .. self.State.TotalKills .. "\n"
+                text = text .. "🪦 Chests: " .. self.State.TotalChestsOpened .. "\n"
+                text = text .. "🍇 Fruits: " .. self.State.TotalFruitsCollected .. "\n"
+                text = text .. "🌊 Sea: " .. self.State.TotalSeaEventsKilled .. "\n"
+                text = text .. "👹 Boss: " .. self.State.TotalBossesKilled .. "\n"
+                text = text .. "🏛️ Raids: " .. self.State.TotalRaidsCompleted .. "\n"
+                
+                local textLabel = frame:FindFirstChild("InfoText")
+                if not textLabel then
+                    textLabel = Instance.new("TextLabel")
+                    textLabel.Name = "InfoText"
+                    textLabel.Parent = frame
+                    textLabel.BackgroundTransparency = 1
+                    textLabel.Size = UDim2.new(0, 190, 0, 135)
+                    textLabel.Position = UDim2.new(0, 5, 0, 22)
+                    textLabel.TextColor3 = Color3.fromRGB(180, 200, 255)
+                    textLabel.TextSize = 10
+                    textLabel.Font = Enum.Font.Gotham
+                    textLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    textLabel.TextYAlignment = Enum.TextYAlignment.Top
+                end
+                textLabel.Text = text
+            end)
+        end
+        
+        spawn(function()
+            while screenGui and screenGui.Parent do
+                updateOverlay()
+                task.wait(2)
+            end
+        end)
+    end)
+end
+
+-- SECTION 27: FORMATAGE NOMBRES
+function O:FormatNumber(n)
+    if not n then return "0" end
+    if n >= 1000000 then return string.format("%.1fM", n / 1000000)
+    elseif n >= 1000 then return string.format("%.1fK", n / 1000)
+    else return tostring(n) end
+end
+
+-- SECTION 28: AUTO RESPAWN
+function O:StartAutoRespawn()
+    spawn(function()
+        while true do task.wait(0.5)
+            pcall(function()
+                if self:IsDead() then
+                    local respawnBtn = LP.PlayerGui:FindFirstChild("DeathGui")
+                    if respawnBtn then
+                        local btn = respawnBtn:FindFirstChild("Respawn") or respawnBtn:FindFirstChild("Button") or respawnBtn:FindFirstChildOfClass("TextButton")
+                        if btn then
+                            btn:Click()
+                            task.wait(2)
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 29: AUTO OBSERVATION HAKI FARM
+function O:StartAutoObservationFarm()
+    spawn(function()
+        while self.Config.AutoObservation and task.wait(30) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 700 then return end
+                self:Remote("BuyHaki", "Observation")
+                self:SafeDelay(0.3)
+                -- Try to farm observation by dodging
+                spawn(function()
+                    for i = 1, 3 do
+                        VirtualUser:CaptureController()
+                        VirtualUser:ClickButton2(Vector2.new())
+                        task.wait(1)
+                    end
+                end)
+            end)
+        end
+    end)
+end
+
+-- SECTION 30: AUTO MASTERY FARM
+function O:StartAutoMasteryFarm()
+    spawn(function()
+        while self.Config.AutoMastery and task.wait(5) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                local tool = Char:FindFirstChildOfClass("Tool")
+                if tool then
+                    local mastery = tool:FindFirstChild("Mastery")
+                    if mastery and mastery.Value >= self.Config.MasteryTarget then
+                        -- Switch to next weapon
+                        local bp = LP:FindFirstChild("Backpack")
+                        if bp then
+                            for _, v in pairs(bp:GetChildren()) do
+                                if v:IsA("Tool") and v ~= tool then
+                                    local m = v:FindFirstChild("Mastery")
+                                    if m and m.Value < self.Config.MasteryTarget then
+                                        LP.Character.Humanoid:EquipTool(v)
+                                        self:SafeDelay(0.5)
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 31: AUTO BATTLE ROYALE / BOUNTY HUNT
+function O:StartAutoBountyHunt()
+    spawn(function()
+        while self.Config.AutoBoss and task.wait(3) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 700 then return end
+                -- Find and attack players if bounty hunting
+                local nearest, nearDist = nil, 5000
+                for _, plr in pairs(Players:GetPlayers()) do
+                    if plr ~= LP and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChildOfClass("Humanoid") then
+                        local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+                        if hum and hum.Health > 0 then
+                            local dist = self:Distance(HRP.Position, plr.Character.HumanoidRootPart.Position)
+                            if dist < nearDist and dist > 50 then
+                                nearest = plr.Character
+                                nearDist = dist
+                            end
+                        end
+                    end
+                end
+                if nearest then
+                    local ePos = nearest.HumanoidRootPart.Position
+                    if nearDist > 20 then
+                        self:TP(ePos + Vector3.new(5,0,5))
+                    end
+                    self:Attack()
+                    self:SpamSkills()
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 32: AUTO FRUIT RAIN COLLECTOR
+function O:StartAutoFruitRain()
+    spawn(function()
+        while task.wait(3) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                -- Check for fruit rain event
+                for _, v in Workspace:GetDescendants() do
+                    if v.Name:find("FruitRain") or v.Name:find("Rain") then
+                        local fruits = self:FindFruits()
+                        for _, fruit in pairs(fruits) do
+                            if fruit:FindFirstChild("Handle") then
+                                local dist = self:Distance(HRP.Position, fruit.Handle.Position)
+                                if dist < 5000 then
+                                    if dist > 10 then self:TP(fruit.Handle.Position) end
+                                    firetouchinterest(HRP, fruit.Handle, 0)
+                                    task.wait(0.05)
+                                    firetouchinterest(HRP, fruit.Handle, 1)
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 33: AUTO SEA OF TREATS FARM
+function O:StartAutoSeaOfTreats()
+    spawn(function()
+        while self.Config.AutoSeaEvent and task.wait(5) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 2100 then return end
+                for _, v in Workspace:GetDescendants() do
+                    if v.Name:find("Cake") or v.Name:find("cake") or v.Name:find("Treat") or v.Name:find("Candy") and v:IsA("BasePart") then
+                        local dist = self:Distance(HRP.Position, v.Position)
+                        if dist < 3000 then
+                            if dist > 10 then self:TP(v.Position) end
+                            task.wait(0.2)
+                            firetouchinterest(HRP, v, 0)
+                            task.wait(0.1)
+                            firetouchinterest(HRP, v, 1)
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 34: AUTO GHOST / HAUNTED CASTLE FARM
+function O:StartAutoHauntedCastle()
+    spawn(function()
+        while task.wait(4) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 1900 then return end
+                for _, v in Workspace:GetDescendants() do
+                    if (v.Name:find("Ghost") or v.Name:find("ghost") or v.Name:find("Soul") or v.Name:find("soul")) and v:IsA("BasePart") then
+                        local dist = self:Distance(HRP.Position, v.Position)
+                        if dist < 2000 then
+                            if dist > 10 then self:TP(v.Position) end
+                            firetouchinterest(HRP, v, 0)
+                            task.wait(0.1)
+                            firetouchinterest(HRP, v, 1)
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 35: AUTO TIKI OUTPOST FARM
+function O:StartAutoTikiFarm()
+    spawn(function()
+        while task.wait(4) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 2200 then return end
+                for _, v in Workspace:GetDescendants() do
+                    if (v.Name:find("Totem") or v.Name:find("Tiki") or v.Name:find("Relic")) and v:IsA("BasePart") then
+                        local dist = self:Distance(HRP.Position, v.Position)
+                        if dist < 2000 then
+                            if dist > 10 then self:TP(v.Position) end
+                            firetouchinterest(HRP, v, 0)
+                            task.wait(0.1)
+                            firetouchinterest(HRP, v, 1)
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 36: AUTO SUBMERGED ISLAND FARM
+function O:StartAutoSubmergedFarm()
+    spawn(function()
+        while task.wait(4) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 2300 then return end
+                for _, v in Workspace:GetDescendants() do
+                    if (v.Name:find("Pearl") or v.Name:find("Coral") or v.Name:find("Submerged") or v.Name:find("Treasure")) and v:IsA("BasePart") then
+                        local dist = self:Distance(HRP.Position, v.Position)
+                        if dist < 2000 then
+                            if dist > 10 then self:TP(v.Position) end
+                            firetouchinterest(HRP, v, 0)
+                            task.wait(0.1)
+                            firetouchinterest(HRP, v, 1)
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 37: AUTO HYDRA ISLAND FARM
+function O:StartAutoHydraFarm()
+    spawn(function()
+        while task.wait(4) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 1575 then return end
+                for _, v in Workspace:GetDescendants() do
+                    if (v.Name:find("Hydra") or v.Name:find("Dragon") or v.Name:find("Scale")) and v:IsA("BasePart") then
+                        local dist = self:Distance(HRP.Position, v.Position)
+                        if dist < 2000 then
+                            if dist > 10 then self:TP(v.Position) end
+                            firetouchinterest(HRP, v, 0)
+                            task.wait(0.1)
+                            firetouchinterest(HRP, v, 1)
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 38: AUTO GREAT TREE FARM
+function O:StartAutoGreatTreeFarm()
+    spawn(function()
+        while task.wait(4) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 1650 then return end
+                for _, v in Workspace:GetDescendants() do
+                    if (v.Name:find("Apple") or v.Name:find("Leaf") or v.Name:find("Branch")) and v:IsA("BasePart") then
+                        local dist = self:Distance(HRP.Position, v.Position)
+                        if dist < 2000 then
+                            if dist > 10 then self:TP(v.Position) end
+                            firetouchinterest(HRP, v, 0)
+                            task.wait(0.1)
+                            firetouchinterest(HRP, v, 1)
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 39: CASTLE ON THE SEA DEFENSE
+function O:StartAutoCastleDefense()
+    spawn(function()
+        while self.Config.AutoBoss and task.wait(3) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 1800 then return end
+                for _, v in Workspace:GetDescendants() do
+                    if v.Name:find("Castle") or v.Name:find("Flag") or v.Name:find("Enemy") then
+                        if v:FindFirstChild("HumanoidRootPart") then
+                            local dist = self:Distance(HRP.Position, v.HumanoidRootPart.Position)
+                            if dist < 3000 then
+                                if dist > 20 then self:TP(v.HumanoidRootPart.Position + Vector3.new(5,0,5)) end
+                                self:Attack()
+                                self:SpamSkills()
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 40: SYSTÈME DE PRIORITÉ INTELLIGENT
+function O:StartPrioritySystem()
+    spawn(function()
+        while true do task.wait(10)
+            pcall(function()
+                local lv = self:GetLevel()
+                local sea = self:GetSea()
+                local hp, maxHp = self:GetHealth()
+                local hpPercent = hp / maxHp
+                
+                -- Auto heal by teleporting to safe zone if needed
+                if hpPercent < 0.3 and self.Config.AutoFarm then
+                    if sea == "First Sea" then self:TPToIsland("StarterPirate")
+                    elseif sea == "Second Sea" then self:TPToIsland("KingdomRose")
+                    elseif sea == "Third Sea" then self:TPToIsland("PortTown") end
+                    task.wait(3)
+                end
+                
+                -- Auto eat fruit if enabled
+                if self.Config.AutoEatFruit and self.Config.FruitToEat ~= "" then
+                    local bp = LP:FindFirstChild("Backpack")
+                    if bp then
+                        for _, item in pairs(bp:GetChildren()) do
+                            if item:IsA("Tool") and (item.Name:find("Fruit") or item.Name:find(self.Config.FruitToEat)) then
+                                LP.Character.Humanoid:EquipTool(item)
+                                task.wait(0.5)
+                                -- Eat the fruit
+                                local eatRemote = item:FindFirstChild("EatRemote") or item:FindFirstChild("Remote")
+                                if eatRemote then eatRemote:FireServer() end
+                                self.Config.AutoEatFruit = false
+                                break
+                            end
+                        end
+                    end
+                end
+                
+                -- Update state
+                self:GetLevel()
+                self:GetSea()
+                self:GetCurrentIsland()
+                self:GetRace()
+                self:GetFruit()
+            end)
+        end
+    end)
+end
+
+-- SECTION 41: MONITORING & AUTOMATIC ADAPTATION
+function O:StartAdaptiveSystem()
+    spawn(function()
+        while true do task.wait(30)
+            pcall(function()
+                local lv = self:GetLevel()
+                
+                -- Auto adjust stats based on level
+                if lv < 100 then
+                    self.Config.StatsPoints = {"Melee", "Defense"}
+                    self.Config.AutoCombatMode = "Melee"
+                elseif lv < 500 then
+                    self.Config.StatsPoints = {"Melee", "Defense", "Sword"}
+                    self.Config.AutoCombatMode = "Sword"
+                elseif lv < 1500 then
+                    self.Config.StatsPoints = {"Melee", "Defense", "Blox Fruit"}
+                    self.Config.AutoCombatMode = "Fruit"
+                else
+                    self.Config.StatsPoints = {"Melee", "Defense", "Sword", "Blox Fruit"}
+                    self.Config.AutoCombatMode = "Smart"
+                end
+                
+                -- Auto adjust sea event priority based on level
+                if lv < 1000 then
+                    if self.Config.AutoSeaBeast then self.Config.AutoSeaEventPriority = "SeaBeast" end
+                elseif lv < 1500 then
+                    if self.Config.AutoTerrorShark then self.Config.AutoSeaEventPriority = "TerrorShark" end
+                else
+                    if self.Config.AutoLeviathan then self.Config.AutoSeaEventPriority = "Leviathan" end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 42: WATER WALK & FLY AUTO
+function O:StartAutoMobility()
+    spawn(function()
+        while true do task.wait(1)
+            pcall(function()
+                if not HRP then return end
+                -- Auto water walk when in sea
+                local pos = HRP.Position
+                if pos.Y < -5 and self.Config.AutoFarm then
+                    HRP.CFrame = CFrame.new(pos.X, 5, pos.Z)
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 43: AUTO FISHING
+function O:StartAutoFishing()
+    spawn(function()
+        while task.wait(5) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 700 then return end
+                -- Auto fish if rod equipped
+                local tool = Char:FindFirstChildOfClass("Tool")
+                if tool and tool.Name:find("Rod") or tool and tool.Name:find("Fishing") then
+                    local fishRemote = tool:FindFirstChild("FishRemote") or tool:FindFirstChild("Remote")
+                    if fishRemote then
+                        fishRemote:FireServer()
+                        task.wait(1)
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 44: AUTO GRAPPLE / SWORD SKILLS
+function O:StartAutoSwordSkills()
+    spawn(function()
+        while self.Config.AutoSkillSpam and task.wait(2) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                local tool = Char:FindFirstChildOfClass("Tool")
+                if tool then
+                    if tool.ToolTip == "Sword" or tool.Name:find("Katana") or tool.Name:find("Sword") or tool.Name:find("Blade") or tool.Name:find("Saber") or tool.Name:find("Yama") or tool.Name:find("Tushita") or tool.Name:find("CDK") or tool.Name:find("TTK") or tool.Name:find("Canvander") then
+                        for _, k in pairs({"Z", "X", "C"}) do
+                            self:UseSkill(k)
+                            task.wait(0.2)
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 45: AUTO GUN SKILLS
+function O:StartAutoGunSkills()
+    spawn(function()
+        while self.Config.AutoSkillSpam and task.wait(2) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                local tool = Char:FindFirstChildOfClass("Tool")
+                if tool and tool.ToolTip == "Gun" then
+                    for _, k in pairs({"Z", "X"}) do
+                        self:UseSkill(k)
+                        task.wait(0.3)
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 46: AUTO FRUIT SKILLS
+function O:StartAutoFruitSkills()
+    spawn(function()
+        while self.Config.AutoSkillSpam and task.wait(2) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                local tool = Char:FindFirstChildOfClass("Tool")
+                if tool and tool.ToolTip == "Blox Fruit" then
+                    for _, k in pairs({"Z", "X", "C", "V"}) do
+                        self:UseSkill(k)
+                        task.wait(0.4)
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 47: AUTO GOD MODE (TELEPORT DODGE)
+function O:StartAutoDodge()
+    spawn(function()
+        while self.Config.AutoDodge and task.wait(0.5) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if Hum and Hum.Health < Hum.MaxHealth * 0.3 then
+                    -- Teleport away to dodge
+                    local safePos = HRP.Position + Vector3.new(math.random(30, 60), 0, math.random(30, 60))
+                    self:TP(safePos)
+                    task.wait(1)
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 48: AUTO AURA / HAKI VISUAL
+function O:StartAutoHakiVisual()
+    spawn(function()
+        while self.Config.AutoBusoHaki and task.wait(30) do
+            pcall(function()
+                if not HRP then return end
+                -- Activate haki visual
+                local hakiObj = Char:FindFirstChild("Haki")
+                if not hakiObj then
+                    self:Remote("Buso")
+                    self:SafeDelay(0.5)
+                end
+            end)
+        end
+    end)
+end
+
+-- SECTION 49: AUTO CLAN / GUILD
+function O:StartAutoGuild()
+    spawn(function()
+        while task.wait(60) do
+            pcall(function()
+                if not HRP or self:IsDead() then return end
+                if self:GetLevel() < 700 then return end
+                -- Join guild
+                self:Remote("JoinGuild")
+                self:Remote("Guild")
+            end)
+        end
+    end)
+end
+
+-- SECTION 50: DÉMARRAGE GÉNÉRAL
+function O:StartAll()
+    print("═══════════════════════════════════════════════════════════════════")
+    print("  ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗")
+    print("  ████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝")
+    print("  ██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗")
+    print("  ██║╚██╗██║██╔══╝   ██╔██╗ ██║   ██║╚════██║")
+    print("  ██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║")
+    print("  ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝")
+    print("═══════════════════════════════════════════════════════════════════")
+    print("  NEXUS OMEGA ULTIMATE v" .. self.Version)
+    print("  Chargement de " .. self:CountSections() .. " modules...")
+    print("═══════════════════════════════════════════════════════════════════")
+    
+    -- Attente chargement complet
+    repeat task.wait() until game:IsLoaded() and LP and LP.Character
+    Char = LP.Character
+    HRP = Char:WaitForChild("HumanoidRootPart")
+    Hum = Char:WaitForChildOfClass("Humanoid")
+    O.Char = Char
+    O.HRP = HRP
+    O.Hum = Hum
+    O.State.IsLoaded = true
+    
+    -- Anti AFK
+    LP.Idled:Connect(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end)
+    
+    print("[1/50] Anti AFK activé")
+    
+    -- Démarrage des modules
+    local modules = {
+        {"Auto Farm", self.Config.AutoFarm, self.StartAutoFarm},
+        {"Auto Boss", self.Config.AutoBoss, self.StartAutoBoss},
+        {"Sea Events", self.Config.AutoSeaEvent, self.StartAutoSeaEvents},
+        {"Fruit Sniper", self.Config.AutoFruitSniper, self.StartAutoFruitSniper},
+        {"Auto Raid", self.Config.AutoRaid, self.StartAutoRaid},
+        {"Race V4", self.Config.AutoRaceV4, self.StartAutoRaceV4},
+        {"Armes Légendaires", true, self.StartAutoWeapons},
+        {"Auto Haki", self.Config.AutoHaki, self.StartAutoHaki},
+        {"Auto Stats", self.Config.AutoStats, self.StartAutoStats},
+        {"Auto Chest", self.Config.AutoChest, self.StartAutoChest},
+        {"Auto Bones", self.Config.AutoBones or self.Config.AutoEctoplasm, self.StartAutoBones},
+        {"Server Hop", self.Config.AutoServerHop, self.StartAutoServerHop},
+        {"ESP", self.Config.ESP, self.StartESP},
+        {"Anti Ban", self.Config.AntiBan, self.StartAntiBan},
+        {"Auto Factory", self.Config.AutoFactory, self.StartAutoFactory},
+        {"Auto Dungeon", self.Config.AutoDungeon, self.StartAutoDungeon},
+        {"Fruit Purchase", self.Config.AutoFruitPurchase, self.StartAutoFruitPurchase},
+        {"Auto Fragment", self.Config.AutoFragment, self.StartAutoFragment},
+        {"Beli Farm", true, self.StartAutoBeliFarm},
+        {"Auto Respawn", true, self.StartAutoRespawn},
+        {"Observation Farm", self.Config.AutoObservation, self.StartAutoObservationFarm},
+        {"Mastery Farm", self.Config.AutoMastery, self.StartAutoMasteryFarm},
+        {"Bounty Hunt", self.Config.AutoBoss, self.StartAutoBountyHunt},
+        {"Fruit Rain", true, self.StartAutoFruitRain},
+        {"Sea of Treats", self.Config.AutoSeaEvent, self.StartAutoSeaOfTreats},
+        {"Haunted Castle", true, self.StartAutoHauntedCastle},
+        {"Tiki Farm", true, self.StartAutoTikiFarm},
+        {"Submerged Farm", true, self.StartAutoSubmergedFarm},
+        {"Hydra Farm", true, self.StartAutoHydraFarm},
+        {"Great Tree", true, self.StartAutoGreatTreeFarm},
+        {"Castle Defense", self.Config.AutoBoss, self.StartAutoCastleDefense},
+        {"Priority System", true, self.StartPrioritySystem},
+        {"Adaptive System", true, self.StartAdaptiveSystem},
+        {"Auto Mobility", true, self.StartAutoMobility},
+        {"Auto Fishing", true, self.StartAutoFishing},
+        {"Sword Skills", self.Config.AutoSkillSpam, self.StartAutoSwordSkills},
+        {"Gun Skills", self.Config.AutoSkillSpam, self.StartAutoGunSkills},
+        {"Fruit Skills", self.Config.AutoSkillSpam, self.StartAutoFruitSkills},
+        {"Auto Dodge", self.Config.AutoDodge, self.StartAutoDodge},
+        {"Haki Visual", self.Config.AutoBusoHaki, self.StartAutoHakiVisual},
+        {"Auto Guild", true, self.StartAutoGuild},
+    }
+    
+    local loaded = 0
+    for _, module in pairs(modules) do
+        if module[2] then
+            local s, e = pcall(module[3], self)
+            if s then
+                loaded = loaded + 1
+            end
+        end
+    end
+    
+    -- GUI et Overlay
+    self:CreateGUI()
+    self:CreateStatsOverlay()
+    
+    print("═══════════════════════════════════════════════════════════════════")
+    print("  ✅ NEXUS OMEGA ULTIMATE v" .. self.Version .. " — CHARGÉ !")
+    print("  📋 Modules actifs: " .. loaded .. "/" .. #modules)
+    print("  🎯 Bon farm !")
+    print("═══════════════════════════════════════════════════════════════════")
+end
+
+function O:CountSections()
+    local count = 0
+    for _, v in pairs(self) do
+        if type(v) == "function" and v.Name and v.Name:find("Start") then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+function O:TPToIsland(name)
+    local isl = self.Islands[name]
+    if isl and isl.Pos then
+        self:TP(isl.Pos)
+        return true
+    end
+    return false
+end
+
+function O:GetHealth()
+    if Hum then return Hum.Health, Hum.MaxHealth end
+    return 0, 100
+end
+
+function O:StartAutoServerHop()
+    -- Alias pour ServerHop
+    self:StartServerHop()
+end
+
+-- LANCEMENT FINAL
+O:StartAll()
