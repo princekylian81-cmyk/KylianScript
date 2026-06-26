@@ -7,7 +7,7 @@
   ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝    ╚═╝      ╚═════╝ ╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 ══════════════════════════════════════════════════════════════════════════════════════════
   NEXUS OMEGA ULTIMATE v8
-  Blox Fruits — Script Fusionné Ultime
+  Blox Fruits — Script Fusionné Ultime 
   Compatible: Delta Executor | Mise à jour: Juin 2026
 ══════════════════════════════════════════════════════════════════════════════════════════
   [📋] Auto Farm Intelligent | Auto Quest | Auto Boss | Auto Mastery
